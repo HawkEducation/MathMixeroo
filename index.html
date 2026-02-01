@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer - Multiplier Edition</title>
+    <title>Math Mixer - Time Traveler Edition</title>
     <style>
         body { background-color: #050505; color: #39FF14; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; text-transform: uppercase; }
         #game-container { border: 2px solid #39FF14; padding: 20px; text-align: center; background: #000; box-shadow: 0 0 15px #39FF14; width: 90%; max-width: 400px; }
@@ -13,10 +13,18 @@
         button { background: #39FF14; color: #000; border: none; padding: 10px; flex: 1; font-weight: bold; cursor: pointer; }
         .active { background: #ff00ff !important; color: #fff; }
         .hidden { display: none; }
+        
+        /* Time Traveler Pulse */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.7; color: #ff0000; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .glitch-active { animation: pulse 0.2s infinite; }
+        
         #rank-display { font-size: 1.8rem; margin: 10px 0; }
         .ace-rank { color: #FFD700 !important; text-shadow: 0 0 15px #FFD700 !important; }
         .normal-rank { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
-        #multiplier-note { font-size: 0.7rem; color: #00ffff; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -30,8 +38,7 @@
             <button id="btn-12" onclick="setDiff(12)" class="active">12X</button>
             <button id="btn-20" onclick="setDiff(20)">20X</button>
         </div>
-        <button onclick="startGame()" style="width: 100%;">INITIALIZE</button>
-        <p id="multiplier-note">ACE: -15s BONUS | PILOT: -5s BONUS</p>
+        <button onclick="startGame()" style="width: 100%;">INITIALIZE MISSION</button>
     </div>
 
     <div id="game-screen" class="hidden">
@@ -41,7 +48,7 @@
     </div>
 
     <div id="end-screen" class="hidden">
-        <h1>MISSION COMPLETE</h1>
+        <h1 id="mission-status">MISSION COMPLETE</h1>
         <div id="rank-display">RANK: ---</div>
         <p id="final-stats"></p>
         <button onclick="location.reload()" style="width: 100%;">RE-RUN MISSION</button>
@@ -87,14 +94,10 @@
         clearInterval(timerInterval);
         let rawTime = isCheating ? 0.1 : parseFloat(document.getElementById('timer').innerText);
         
-        // APPLY MULTIPLIER BONUS
-        let bonus = 0;
-        if (difficulty === 20) bonus = 15;
-        if (difficulty === 12) bonus = 5;
-        
+        let bonus = (difficulty === 20) ? 15 : (difficulty === 12 ? 5 : 0);
         let adjustedTime = rawTime - bonus;
-        let rankBase = "";
         
+        let rankBase = "";
         if (adjustedTime < 30) rankBase = "GENIUS";
         else if (adjustedTime < 60) rankBase = "SPEEDY";
         else if (adjustedTime < 90) rankBase = "AMATEUR";
@@ -102,7 +105,13 @@
         else rankBase = "NEWBIE";
 
         const rankDiv = document.getElementById('rank-display');
-        if (isCheating) {
+        const statusH1 = document.getElementById('mission-status');
+
+        if (adjustedTime < 0) {
+            rankDiv.innerText = "RANK: TIME TRAVELER";
+            rankDiv.classList.add('glitch-active');
+            statusH1.innerText = "SYSTEM CRITICAL";
+        } else if (isCheating) {
             rankDiv.innerText = "RANK: EXPOSED";
             rankDiv.className = "normal-rank";
         } else {
@@ -112,7 +121,7 @@
 
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('end-screen').classList.remove('hidden');
-        document.getElementById('final-stats').innerText = `PILOT: ${document.getElementById('username').value}\nRAW TIME: ${rawTime}s\nRANK SCORE: ${adjustedTime.toFixed(1)}s`;
+        document.getElementById('final-stats').innerText = `PILOT: ${document.getElementById('username').value}\nRAW TIME: ${rawTime}s\nSCORE: ${adjustedTime.toFixed(1)}s`;
     }
 </script>
 </body>
