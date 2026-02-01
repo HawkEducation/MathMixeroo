@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer - Local Legend</title>
+    <title>Math Mixer - Ranked</title>
     <style>
         body { background-color: #050505; color: #39FF14; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; text-transform: uppercase; }
         #game-container { border: 2px solid #39FF14; padding: 20px; text-align: center; background: #000; box-shadow: 0 0 15px #39FF14; width: 90%; max-width: 400px; }
@@ -13,7 +13,7 @@
         button { background: #39FF14; color: #000; border: none; padding: 10px; flex: 1; font-weight: bold; cursor: pointer; }
         .active { background: #ff00ff !important; color: #fff; }
         .hidden { display: none; }
-        #best-score { color: #ff00ff; font-size: 0.8rem; margin-top: 10px; }
+        #rank-display { font-size: 2rem; color: #ff00ff; margin: 10px 0; text-shadow: 0 0 10px #ff00ff; }
     </style>
 </head>
 <body>
@@ -28,7 +28,6 @@
             <button id="btn-20" onclick="setDiff(20)">20X</button>
         </div>
         <button onclick="startGame()" style="width: 100%;">INITIALIZE</button>
-        <div id="best-score">PERSONAL BEST: <span id="pb-display">--</span>s</div>
     </div>
 
     <div id="game-screen" class="hidden">
@@ -38,7 +37,8 @@
     </div>
 
     <div id="end-screen" class="hidden">
-        <h1 id="rank-title">COMPLETE</h1>
+        <h1>MISSION COMPLETE</h1>
+        <div id="rank-display">RANK: ---</div>
         <p id="final-stats"></p>
         <button onclick="location.reload()" style="width: 100%;">RE-RUN</button>
     </div>
@@ -46,10 +46,6 @@
 
 <script>
     let questionCount = 0, startTime, currentAns, difficulty = 12, timerInterval, isCheating = false;
-
-    // Load Best Score on Startup
-    const savedBest = localStorage.getItem('mathMixerBest');
-    if (savedBest) document.getElementById('pb-display').innerText = savedBest;
 
     function setDiff(val) {
         difficulty = val;
@@ -86,20 +82,18 @@
     function endGame() {
         clearInterval(timerInterval);
         let time = isCheating ? 0.1 : parseFloat(document.getElementById('timer').innerText);
+        
+        let rank = "";
+        if (isCheating) rank = "EXPOSED";
+        else if (time < 30) rank = "GENIUS";
+        else if (time < 60) rank = "SPEEDY";
+        else if (time < 90) rank = "AMATEUR";
+        else if (time < 120) rank = "ROOKIE";
+        else rank = "NEWBIE";
+
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('end-screen').classList.remove('hidden');
-
-        // Save High Score (Only if NOT cheating)
-        if (!isCheating) {
-            const currentBest = localStorage.getItem('mathMixerBest');
-            if (!currentBest || time < parseFloat(currentBest)) {
-                localStorage.setItem('mathMixerBest', time);
-                document.getElementById('rank-title').innerText = "NEW RECORD!";
-            }
-        } else {
-            document.getElementById('rank-title').innerText = "CHEATER! :)";
-        }
-
+        document.getElementById('rank-display').innerText = "RANK: " + rank;
         document.getElementById('final-stats').innerText = `PILOT: ${document.getElementById('username').value}\nTIME: ${time}s`;
     }
 </script>
