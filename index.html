@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer Arcade V2</title>
+    <title>Math Mixer Arcade - Mobile Fixed</title>
     <style>
         body {
             background-color: #050505;
@@ -12,63 +12,64 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
             overflow: hidden;
             text-transform: uppercase;
         }
-        /* Retro Scanline Effect */
+        /* Retro Scanline overlay */
         body::before {
             content: " ";
             display: block;
             position: absolute;
             top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
             z-index: 2;
-            background-size: 100% 4px, 3px 100%;
+            background-size: 100% 4px;
             pointer-events: none;
         }
         #game-container {
             border: 2px solid #39FF14;
-            padding: 40px;
+            padding: 20px;
             text-align: center;
             background: #000;
-            box-shadow: 0 0 15px #39FF14, inset 0 0 10px #39FF14;
+            box-shadow: 0 0 15px #39FF14;
             position: relative;
             z-index: 1;
+            width: 90%; /* Responsive width */
+            max-width: 400px; /* Limits size on desktop */
+            box-sizing: border-box;
         }
         h1 { 
-            font-size: 3rem; 
-            margin: 0; 
+            font-size: clamp(1.5rem, 8vw, 2.5rem); /* Scales text size */
+            margin: 0 0 15px 0; 
             color: #fff;
-            text-shadow: 0 0 10px #39FF14, 0 0 20px #39FF14, 0 0 30px #39FF14;
+            text-shadow: 0 0 10px #39FF14;
         }
         input {
-            background: transparent;
+            background: rgba(57, 255, 20, 0.1);
             border: 1px solid #39FF14;
             color: #fff;
-            font-size: 2rem;
+            font-size: 1.2rem;
             padding: 10px;
-            width: 150px;
+            width: 100%; /* Fits the box */
             text-align: center;
             outline: none;
-            box-shadow: 0 0 5px #39FF14;
+            margin-bottom: 15px;
+            box-sizing: border-box;
         }
         button {
             background: #39FF14;
             color: #000;
             border: none;
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            margin-top: 20px;
+            padding: 15px 25px;
+            font-size: 1rem;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 0 15px #39FF14;
+            width: 100%;
         }
-        button:hover { background: #fff; box-shadow: 0 0 20px #fff; }
         .hidden { display: none; }
-        #feedback { height: 20px; color: #ff00ff; margin-top: 10px; }
+        #question { font-size: clamp(2.5rem, 15vw, 4rem); margin: 20px 0; }
     </style>
 </head>
 <body>
@@ -76,57 +77,56 @@
 <div id="game-container">
     <div id="start-screen">
         <h1>MATH MIXER</h1>
-        <p style="margin: 20px 0;">[SYSTEM READY]</p>
-        <input type="text" id="username" placeholder="CALLSIGN" maxlength="10">
-        <br>
-        <button onclick="startGame()">START MISSION</button>
+        <p style="font-size: 0.8rem;">[ID REQUIRED]</p>
+        <input type="text" id="username" placeholder="ENTER CALLSIGN" maxlength="12">
+        <button id="start-btn">INITIALIZE</button>
     </div>
 
     <div id="game-screen" class="hidden">
-        <div id="question" style="font-size: 4rem; margin: 20px 0;"></div>
-        <input type="number" id="answer" autocomplete="off">
-        <div style="margin-top: 20px;">
-            TIME: <span id="timer" style="color:#ff00ff">0.0s</span> | 
-            COMBO: <span id="score">0</span>
+        <div id="question"></div>
+        <input type="number" id="answer" autocomplete="off" placeholder="?">
+        <div style="margin-top: 20px; font-size: 0.8rem;">
+            PILOT: <span id="display-name">---</span><br>
+            TIME: <span id="timer" style="color:#ff00ff">0.0s</span>
         </div>
-        <div id="feedback"></div>
     </div>
 
     <div id="end-screen" class="hidden">
-        <h1 style="color:#ff00ff">DEBRIEFING</h1>
-        <p id="final-stats" style="font-size: 1.2rem; line-height: 1.6; margin: 20px 0;"></p>
-        <button onclick="location.reload()">RE-INITIALIZE</button>
+        <h1 style="color:#ff00ff">COMPLETE</h1>
+        <p id="final-stats" style="margin: 20px 0; font-size: 0.9rem;"></p>
+        <button onclick="location.reload()">RE-RUN</button>
     </div>
 </div>
 
 <script>
-    let score = 0;
     let questionCount = 0;
     let startTime;
-    let timerInterval;
     let currentAns;
     const maxQuestions = 20;
 
-    function startGame() {
-        const name = document.getElementById('username').value;
-        if (!name) return alert("IDENTIFY YOURSELF, PILOT.");
-
+    document.getElementById('start-btn').addEventListener('click', () => {
+        const name = document.getElementById('username').value.trim();
+        if (!name) return alert("INPUT CALLSIGN.");
+        
+        document.getElementById('display-name').innerText = name;
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
         
         startTime = Date.now();
-        timerInterval = setInterval(() => {
-            document.getElementById('timer').innerText = ((Date.now() - startTime) / 1000).toFixed(1) + 's';
+        setInterval(() => {
+            const elapsed = (Date.now() - startTime) / 1000;
+            document.getElementById('timer').innerText = elapsed.toFixed(1) + 's';
         }, 100);
         nextQuestion();
-
-        document.getElementById('answer').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') checkAnswer();
-        });
-    }
+    });
 
     function nextQuestion() {
-        if (questionCount >= maxQuestions) return endGame();
+        if (questionCount >= maxQuestions) {
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('end-screen').classList.remove('hidden');
+            document.getElementById('final-stats').innerText = "TIME: " + document.getElementById('timer').innerText;
+            return;
+        }
         const n1 = Math.floor(Math.random() * 12) + 1;
         const n2 = Math.floor(Math.random() * 12) + 1;
         currentAns = n1 * n2;
@@ -135,28 +135,12 @@
         document.getElementById('answer').focus();
     }
 
-    function checkAnswer() {
-        const userAns = parseInt(document.getElementById('answer').value);
-        if (userAns === currentAns) {
-            score++;
+    document.getElementById('answer').addEventListener('input', (e) => {
+        if (parseInt(e.target.value) === currentAns) {
             questionCount++;
-            document.getElementById('score').innerText = score;
             nextQuestion();
-        } else {
-            const fb = document.getElementById('feedback');
-            fb.innerText = "!! DATA ERROR !!";
-            setTimeout(() => fb.innerText = "", 600);
         }
-    }
-
-    function endGame() {
-        clearInterval(timerInterval);
-        const name = document.getElementById('username').value;
-        document.getElementById('game-screen').classList.add('hidden');
-        document.getElementById('end-screen').classList.remove('hidden');
-        document.getElementById('final-stats').innerText = 
-            "PILOT: " + name + "\nACCURACY: 100%\nTIME: " + document.getElementById('timer').innerText;
-    }
+    });
 </script>
 </body>
 </html>
