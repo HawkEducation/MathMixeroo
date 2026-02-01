@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer - Fixed</title>
+    <title>Math Mixer - Local Legend</title>
     <style>
         body { background-color: #050505; color: #39FF14; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; text-transform: uppercase; }
-        #game-container { border: 2px solid #39FF14; padding: 20px; text-align: center; background: #000; box-shadow: 0 0 15px #39FF14; width: 90%; max-width: 400px; z-index: 1; }
+        #game-container { border: 2px solid #39FF14; padding: 20px; text-align: center; background: #000; box-shadow: 0 0 15px #39FF14; width: 90%; max-width: 400px; }
         h1 { font-size: 2rem; color: #fff; text-shadow: 0 0 10px #39FF14; }
         input { background: rgba(57, 255, 20, 0.1); border: 1px solid #39FF14; color: #fff; font-size: 1.5rem; padding: 10px; width: 100%; text-align: center; margin-bottom: 15px; box-sizing: border-box; }
         .btn-group { display: flex; gap: 5px; margin-bottom: 15px; }
         button { background: #39FF14; color: #000; border: none; padding: 10px; flex: 1; font-weight: bold; cursor: pointer; }
-        button:hover { background: #fff; }
         .active { background: #ff00ff !important; color: #fff; }
         .hidden { display: none; }
+        #best-score { color: #ff00ff; font-size: 0.8rem; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -23,57 +23,47 @@
         <h1>MATH MIXER</h1>
         <input type="text" id="username" placeholder="CALLSIGN" maxlength="12">
         <div class="btn-group">
-            <button id="btn-5" onclick="setDiff(5)">RECRUIT</button>
-            <button id="btn-12" onclick="setDiff(12)" class="active">PILOT</button>
-            <button id="btn-20" onclick="setDiff(20)">ACE</button>
+            <button id="btn-5" onclick="setDiff(5)">5X</button>
+            <button id="btn-12" onclick="setDiff(12)" class="active">12X</button>
+            <button id="btn-20" onclick="setDiff(20)">20X</button>
         </div>
-        <button onclick="startGame()" style="width: 100%; font-size: 1.2rem;">INITIALIZE</button>
+        <button onclick="startGame()" style="width: 100%;">INITIALIZE</button>
+        <div id="best-score">PERSONAL BEST: <span id="pb-display">--</span>s</div>
     </div>
 
     <div id="game-screen" class="hidden">
         <div id="question" style="font-size: 3rem; margin: 20px 0;"></div>
-        <input type="number" id="answer" autocomplete="off" placeholder="?">
-        <div style="font-size: 0.8rem;">
-            TIME: <span id="timer" style="color:#ff00ff">0.0s</span>
-        </div>
+        <input type="number" id="answer" autocomplete="off">
+        <div style="font-size: 0.8rem;">TIME: <span id="timer">0.0</span>s</div>
     </div>
 
     <div id="end-screen" class="hidden">
-        <h1 style="color:#ff00ff">COMPLETE</h1>
+        <h1 id="rank-title">COMPLETE</h1>
         <p id="final-stats"></p>
         <button onclick="location.reload()" style="width: 100%;">RE-RUN</button>
     </div>
 </div>
 
 <script>
-    let questionCount = 0;
-    let startTime;
-    let currentAns;
-    let difficulty = 12;
-    let timerInterval;
+    let questionCount = 0, startTime, currentAns, difficulty = 12, timerInterval, isCheating = false;
+
+    // Load Best Score on Startup
+    const savedBest = localStorage.getItem('mathMixerBest');
+    if (savedBest) document.getElementById('pb-display').innerText = savedBest;
 
     function setDiff(val) {
         difficulty = val;
-        // Reset all buttons
-        document.getElementById('btn-5').classList.remove('active');
-        document.getElementById('btn-12').classList.remove('active');
-        document.getElementById('btn-20').classList.remove('active');
-        // Set clicked button to active
-        document.getElementById('btn-' + val).classList.add('active');
+        [5, 12, 20].forEach(d => document.getElementById('btn-'+d).classList.remove('active'));
+        document.getElementById('btn-'+val).classList.add('active');
     }
 
     function startGame() {
-        const name = document.getElementById('username').value.trim();
-        if (!name) {
-            alert("INPUT CALLSIGN.");
-            return;
-        }
+        if (!document.getElementById('username').value.trim()) return alert("INPUT CALLSIGN.");
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
-        
         startTime = Date.now();
         timerInterval = setInterval(() => {
-            document.getElementById('timer').innerText = ((Date.now() - startTime) / 1000).toFixed(1) + 's';
+            document.getElementById('timer').innerText = ((Date.now() - startTime) / 1000).toFixed(1);
         }, 100);
         nextQuestion();
     }
@@ -89,23 +79,28 @@
     }
 
     document.getElementById('answer').addEventListener('input', (e) => {
-        if (e.target.value === "999") { // The Cheat
-            clearInterval(timerInterval);
-            document.getElementById('timer').innerText = "0.1s";
-            endGame();
-            return;
-        }
-        if (parseInt(e.target.value) === currentAns) {
-            questionCount++;
-            nextQuestion();
-        }
+        if (e.target.value === "999") { isCheating = true; endGame(); return; }
+        if (parseInt(e.target.value) === currentAns) { questionCount++; nextQuestion(); }
     });
 
     function endGame() {
         clearInterval(timerInterval);
+        let time = isCheating ? 0.1 : parseFloat(document.getElementById('timer').innerText);
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('end-screen').classList.remove('hidden');
-        document.getElementById('final-stats').innerText = "PILOT: " + document.getElementById('username').value + "\nTIME: " + document.getElementById('timer').innerText;
+
+        // Save High Score (Only if NOT cheating)
+        if (!isCheating) {
+            const currentBest = localStorage.getItem('mathMixerBest');
+            if (!currentBest || time < parseFloat(currentBest)) {
+                localStorage.setItem('mathMixerBest', time);
+                document.getElementById('rank-title').innerText = "NEW RECORD!";
+            }
+        } else {
+            document.getElementById('rank-title').innerText = "CHEATER! :)";
+        }
+
+        document.getElementById('final-stats').innerText = `PILOT: ${document.getElementById('username').value}\nTIME: ${time}s`;
     }
 </script>
 </body>
