@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Mixer Arcade</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #39FF14;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        #game-container {
+            border: 4px solid #39FF14;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 20px #39FF14;
+            background: rgba(0, 20, 0, 0.9);
+            width: 90%;
+            max-width: 500px;
+        }
+        h1 { font-size: 2.5rem; text-shadow: 2px 2px #ff00ff; margin-bottom: 10px; }
+        input {
+            background: #000;
+            border: 2px solid #39FF14;
+            color: #39FF14;
+            font-size: 1.5rem;
+            padding: 10px;
+            width: 80%;
+            text-align: center;
+            outline: none;
+        }
+        button {
+            background: #39FF14;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            margin-top: 20px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background: #ff00ff; color: white; }
+        .stats { display: flex; justify-content: space-around; margin-top: 20px; font-size: 1.1rem; }
+        #timer { color: #ff00ff; font-weight: bold; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="start-screen">
+        <h1>MATH MIXER</h1>
+        <p>ENTER CALLSIGN TO START DAILY MISSION</p>
+        <input type="text" id="username" placeholder="NAME" maxlength="10">
+        <br>
+        <button onclick="startGame()">INITIALIZE</button>
+    </div>
+
+    <div id="game-screen" class="hidden">
+        <div id="question" style="font-size: 3rem; margin: 20px 0;"></div>
+        <input type="number" id="answer" placeholder="?" autocomplete="off">
+        <div class="stats">
+            <div>COMBO: <span id="score">0</span></div>
+            <div>TIME: <span id="timer">0.0s</span></div>
+        </div>
+        <p id="feedback"></p>
+    </div>
+
+    <div id="end-screen" class="hidden">
+        <h1>MISSION COMPLETE</h1>
+        <p id="final-stats"></p>
+        <button onclick="location.reload()">RETRY?</button>
+    </div>
+</div>
+
+<script>
+    let score = 0;
+    let questionCount = 0;
+    let startTime;
+    let timerInterval;
+    let currentAns;
+    const maxQuestions = 20;
+
+    function startGame() {
+        const name = document.getElementById('username').value;
+        if (!name) return alert("ENTER CALLSIGN!");
+
+        const lastPlayed = localStorage.getItem('lastPlayed_' + name);
+        const today = new Date().toDateString();
+        if (lastPlayed === today) {
+            alert("DAILY MISSION ALREADY COMPLETED. RETURN TOMORROW.");
+            return;
+        }
+
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        
+        startTime = Date.now();
+        timerInterval = setInterval(updateTimer, 100);
+        nextQuestion();
+
+        document.getElementById('answer').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') checkAnswer();
+        });
+    }
+
+    function updateTimer() {
+        const elapsed = (Date.now() - startTime) / 1000;
+        document.getElementById('timer').innerText = elapsed.toFixed(1) + 's';
+    }
+
+    function nextQuestion() {
+        if (questionCount >= maxQuestions) return endGame();
+        
+        const n1 = Math.floor(Math.random() * 12) + 1;
+        const n2 = Math.floor(Math.random() * 12) + 1;
+        currentAns = n1 * n2;
+        
+        document.getElementById('question').innerText = `${n1} x ${n2}`;
+        document.getElementById('answer').value = '';
+        document.getElementById('answer').focus();
+    }
+
+    function checkAnswer() {
+        const userAns = parseInt(document.getElementById('answer').value);
+        if (userAns === currentAns) {
+            score++;
+            questionCount++;
+            document.getElementById('score').innerText = score;
+            nextQuestion();
+        } else {
+            document.getElementById('feedback').innerText = "ERROR! TRY AGAIN";
+            setTimeout(() => document.getElementById('feedback').innerText = "", 500);
+        }
+    }
+
+    function endGame() {
+        clearInterval(timerInterval);
+        const finalTime = document.getElementById('timer').innerText;
+        const name = document.getElementById('username').value;
+        
+        localStorage.setItem('lastPlayed_' + name, new Date().toDateString());
+        
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('end-screen').classList.remove('hidden');
+        document.getElementById('final-stats').innerText = 
+            `PILOT: ${name}\nCOMBO: ${score}/${maxQuestions}\nTIME: ${finalTime}`;
+    }
+</script>
+
+</body>
+</html>
