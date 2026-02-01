@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer - Ranked</title>
+    <title>Math Mixer - Multiplier Edition</title>
     <style>
         body { background-color: #050505; color: #39FF14; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; text-transform: uppercase; }
         #game-container { border: 2px solid #39FF14; padding: 20px; text-align: center; background: #000; box-shadow: 0 0 15px #39FF14; width: 90%; max-width: 400px; }
@@ -13,7 +13,10 @@
         button { background: #39FF14; color: #000; border: none; padding: 10px; flex: 1; font-weight: bold; cursor: pointer; }
         .active { background: #ff00ff !important; color: #fff; }
         .hidden { display: none; }
-        #rank-display { font-size: 2rem; color: #ff00ff; margin: 10px 0; text-shadow: 0 0 10px #ff00ff; }
+        #rank-display { font-size: 1.8rem; margin: 10px 0; }
+        .ace-rank { color: #FFD700 !important; text-shadow: 0 0 15px #FFD700 !important; }
+        .normal-rank { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+        #multiplier-note { font-size: 0.7rem; color: #00ffff; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -28,19 +31,20 @@
             <button id="btn-20" onclick="setDiff(20)">20X</button>
         </div>
         <button onclick="startGame()" style="width: 100%;">INITIALIZE</button>
+        <p id="multiplier-note">ACE: -15s BONUS | PILOT: -5s BONUS</p>
     </div>
 
     <div id="game-screen" class="hidden">
         <div id="question" style="font-size: 3rem; margin: 20px 0;"></div>
         <input type="number" id="answer" autocomplete="off">
-        <div style="font-size: 0.8rem;">TIME: <span id="timer">0.0</span>s</div>
+        <div style="font-size: 0.8rem;">REAL TIME: <span id="timer">0.0</span>s</div>
     </div>
 
     <div id="end-screen" class="hidden">
         <h1>MISSION COMPLETE</h1>
         <div id="rank-display">RANK: ---</div>
         <p id="final-stats"></p>
-        <button onclick="location.reload()" style="width: 100%;">RE-RUN</button>
+        <button onclick="location.reload()" style="width: 100%;">RE-RUN MISSION</button>
     </div>
 </div>
 
@@ -81,20 +85,34 @@
 
     function endGame() {
         clearInterval(timerInterval);
-        let time = isCheating ? 0.1 : parseFloat(document.getElementById('timer').innerText);
+        let rawTime = isCheating ? 0.1 : parseFloat(document.getElementById('timer').innerText);
         
-        let rank = "";
-        if (isCheating) rank = "EXPOSED";
-        else if (time < 30) rank = "GENIUS";
-        else if (time < 60) rank = "SPEEDY";
-        else if (time < 90) rank = "AMATEUR";
-        else if (time < 120) rank = "ROOKIE";
-        else rank = "NEWBIE";
+        // APPLY MULTIPLIER BONUS
+        let bonus = 0;
+        if (difficulty === 20) bonus = 15;
+        if (difficulty === 12) bonus = 5;
+        
+        let adjustedTime = rawTime - bonus;
+        let rankBase = "";
+        
+        if (adjustedTime < 30) rankBase = "GENIUS";
+        else if (adjustedTime < 60) rankBase = "SPEEDY";
+        else if (adjustedTime < 90) rankBase = "AMATEUR";
+        else if (adjustedTime < 120) rankBase = "ROOKIE";
+        else rankBase = "NEWBIE";
+
+        const rankDiv = document.getElementById('rank-display');
+        if (isCheating) {
+            rankDiv.innerText = "RANK: EXPOSED";
+            rankDiv.className = "normal-rank";
+        } else {
+            rankDiv.innerText = (difficulty === 20 ? "[★ ACE] " : "") + rankBase;
+            rankDiv.className = difficulty === 20 ? "ace-rank" : "normal-rank";
+        }
 
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('end-screen').classList.remove('hidden');
-        document.getElementById('rank-display').innerText = "RANK: " + rank;
-        document.getElementById('final-stats').innerText = `PILOT: ${document.getElementById('username').value}\nTIME: ${time}s`;
+        document.getElementById('final-stats').innerText = `PILOT: ${document.getElementById('username').value}\nRAW TIME: ${rawTime}s\nRANK SCORE: ${adjustedTime.toFixed(1)}s`;
     }
 </script>
 </body>
