@@ -3,37 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer v7.9.1</title>
+    <title>Math Mixer v7.9.2</title>
     <style>
         body { background-color: #050505; color: #39FF14; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; text-transform: uppercase; }
         #game-container { border: 2px solid #39FF14; padding: 20px; text-align: center; background: #000; box-shadow: 0 0 15px #39FF14; width: 90%; max-width: 400px; position: relative; }
         h1 { font-size: 2rem; color: #fff; text-shadow: 0 0 10px #39FF14; margin-bottom: 20px; }
         input { background: rgba(57, 255, 20, 0.1); border: 1px solid #39FF14; color: #fff; font-size: 1.5rem; padding: 10px; width: 100%; text-align: center; margin-bottom: 15px; box-sizing: border-box; outline: none; }
-        
-        /* New v7.9.1 Success Flash */
         .correct-flash { border-color: #fff !important; box-shadow: 0 0 20px #fff; transition: 0.1s; }
-
         .btn-group { display: flex; gap: 5px; margin-bottom: 15px; }
         button { background: #39FF14; color: #000; border: none; padding: 10px; flex: 1; font-weight: bold; cursor: pointer; transition: 0.2s; }
         button:hover { background: #fff; }
         .active { background: #ff00ff !important; color: #fff; box-shadow: 0 0 10px #ff00ff; }
         .hidden { display: none; }
-        
         @keyframes pulse {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.05); opacity: 0.8; color: #ff0000; text-shadow: 0 0 20px #ff0000; }
             100% { transform: scale(1); opacity: 1; }
         }
         .special-status { animation: pulse 0.15s infinite; }
-        
         #rank-display { font-size: 1.8rem; margin: 15px 0; font-weight: bold; }
         .ace-rank { color: #FFD700 !important; text-shadow: 0 0 15px #FFD700 !important; }
         .normal-rank { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
-        
         #leaderboard { margin: 20px 0; border-top: 1px solid #333; padding-top: 15px; font-size: 0.8rem; text-align: left; }
         .lb-title { color: #ff00ff; margin-bottom: 8px; letter-spacing: 2px; text-align: center; }
         .lb-entry { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px solid #111; }
-
         #version-tag { font-size: 0.6rem; color: rgba(57, 255, 20, 0.4); margin-top: 20px; letter-spacing: 2px; }
         #final-stats { white-space: pre-wrap; line-height: 1.6; margin: 10px 0; }
     </style>
@@ -56,28 +49,26 @@
         <div id="question" style="font-size: 3.5rem; margin: 25px 0; color: #fff;"></div>
         <input type="number" id="answer" autocomplete="off">
         <div style="font-size: 0.9rem; letter-spacing: 1px;">SYSTEM CLOCK: <span id="timer">0.0</span>s</div>
+        <div id="debug-hint" style="font-size: 0.6rem; margin-top: 10px; color: #555;" class="hidden">DEBUG: PRESS ESC TO SKIP</div>
     </div>
 
     <div id="end-screen" class="hidden">
         <h1 id="mission-status">MISSION COMPLETE</h1>
         <div id="rank-display">RANK: ---</div>
         <p id="final-stats"></p>
-        
         <div id="leaderboard">
             <div class="lb-title">TOP PILOTS (LOCAL)</div>
             <div id="leaderboard-list"></div>
         </div>
-
         <button onclick="location.reload()" style="width: 100%;">RE-RUN MISSION</button>
     </div>
 
-    <div id="version-tag">SYSTEM VERSION: v7.9.1</div>
+    <div id="version-tag">SYSTEM VERSION: v7.9.2</div>
 </div>
 
 <script>
-    let qCount = 0, start, curAns, diff = 12, clock, isSysOverride = false;
+    let qCount = 0, start, curAns, diff = 12, clock, isSysOverride = false, isDev = false;
 
-    // Load saved callsign on boot
     window.onload = () => {
         const saved = localStorage.getItem('lastCallsign');
         if(saved) document.getElementById('username').value = saved;
@@ -92,12 +83,19 @@
     function startGame() {
         const user = document.getElementById('username').value.trim();
         if (!user) return alert("INPUT CALLSIGN.");
-        localStorage.setItem('lastCallsign', user); // Persistent storage
+        localStorage.setItem('lastCallsign', user);
         
+        isDev = (user.toUpperCase() === "TEST");
+        if (isDev) {
+            qCount = 19; // Dev shortcut: Only 1 question needed
+            document.getElementById('debug-hint').classList.remove('hidden');
+        } else {
+            qCount = 0;
+        }
+
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
-        const input = document.getElementById('answer');
-        input.focus();
+        document.getElementById('answer').focus();
         
         start = Date.now();
         clock = setInterval(() => {
@@ -115,20 +113,22 @@
         document.getElementById('answer').value = '';
     }
 
+    document.addEventListener('keydown', (e) => {
+        if (isDev && e.key === "Escape") end();
+    });
+
     document.getElementById('answer').addEventListener('input', (e) => {
         if (e.target.value === "999") { isSysOverride = true; end(); return; }
         if (parseInt(e.target.value) === curAns) {
-            // Visual feedback for success
             e.target.classList.add('correct-flash');
             setTimeout(() => e.target.classList.remove('correct-flash'), 100);
-            
             qCount++; 
             next(); 
         }
     });
 
     function saveToBoard(name, score) {
-        if (isSysOverride || name === "TEST") return;
+        if (isSysOverride || isDev) return;
         let data = JSON.parse(localStorage.getItem('mixerScores')) || [];
         data.push({ name, score: parseFloat(score) });
         data.sort((a, b) => a.score - b.score);
@@ -146,7 +146,6 @@
     function end() {
         clearInterval(clock);
         const name = document.getElementById('username').value.trim().toUpperCase();
-        const isDev = (name === "TEST");
         const raw = isDev ? 0.0 : (isSysOverride ? 0.1 : parseFloat(document.getElementById('timer').innerText));
         const bonus = (diff === 20) ? 15 : (diff === 12 ? 5 : 0);
         const final = raw - bonus;
@@ -159,6 +158,8 @@
 
         if (isDev) {
             rankDiv.innerText = "DEV_MODE: ACTIVE";
+            rankDiv.className = "normal-rank";
+            statusH1.innerText = "SYSTEM SECURE";
         } else if (final < 0) {
             rankDiv.innerText = "RANK: TIME TRAVELER";
             rankDiv.classList.add('special-status');
