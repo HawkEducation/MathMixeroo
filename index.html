@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer Arcade - Cheat Edition</title>
+    <title>Math Mixer Arcade - Elite Edition</title>
     <style>
         body {
             background-color: #050505; color: #39FF14;
@@ -22,7 +22,7 @@
             background: #000; box-shadow: 0 0 15px #39FF14;
             position: relative; z-index: 1; width: 90%; max-width: 400px;
         }
-        h1 { font-size: clamp(1.5rem, 8vw, 2.5rem); margin: 0 0 15px 0; color: #fff; text-shadow: 0 0 10px #39FF14; cursor: pointer; }
+        h1 { font-size: clamp(1.5rem, 8vw, 2.5rem); margin: 0 0 15px 0; color: #fff; text-shadow: 0 0 10px #39FF14; }
         input {
             background: rgba(57, 255, 20, 0.1); border: 1px solid #39FF14;
             color: #fff; font-size: 1.2rem; padding: 10px; width: 100%;
@@ -42,7 +42,7 @@
 
 <div id="game-container">
     <div id="start-screen">
-        <h1 onclick="cheat()">MATH MIXER</h1>
+        <h1>MATH MIXER</h1>
         <input type="text" id="username" placeholder="CALLSIGN" maxlength="12">
         <div class="btn-group">
             <button onclick="setDiff(5, this)">RECRUIT</button>
@@ -53,7 +53,7 @@
     </div>
 
     <div id="game-screen" class="hidden">
-        <h1 onclick="cheat()" style="font-size: 1.2rem; opacity: 0.5;">MATH MIXER</h1>
+        <h1 style="font-size: 1.2rem; opacity: 0.5;">MATH MIXER</h1>
         <div id="question" style="font-size: 3rem; margin: 20px 0;"></div>
         <input type="number" id="answer" autocomplete="off" placeholder="?">
         <div style="font-size: 0.8rem;">
@@ -63,7 +63,7 @@
 
     <div id="end-screen" class="hidden">
         <h1 style="color:#ff00ff">MISSION COMPLETE</h1>
-        <p id="final-stats"></p>
+        <p id="final-stats" style="white-space: pre-wrap; margin: 20px 0;"></p>
         <button onclick="location.reload()" style="width: 100%;">RE-RUN MISSION</button>
     </div>
 </div>
@@ -95,10 +95,16 @@
         nextQuestion();
     }
 
+    // SECRET KEYBOARD TRIGGER
+    window.addEventListener('keydown', (e) => {
+        if (e.key === '`') { // The backtick key
+            cheat();
+        }
+    });
+
     function cheat() {
-        // The Secret Cheat: Instantly finish with 0.5s time
         clearInterval(timerInterval);
-        document.getElementById('timer').innerText = "0.5s";
+        document.getElementById('timer').innerText = "0.2s";
         endGame();
     }
 
@@ -123,7 +129,10 @@
         clearInterval(timerInterval);
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('end-screen').classList.remove('hidden');
-        document.getElementById('final-stats').innerText = "PILOT: " + document.getElementById('username').value + "\nTIME: " + document.getElementById('timer').innerText + "\nRANK: S-TIER";
+        document.getElementById('final-stats').innerText = 
+            "PILOT: " + document.getElementById('username').value + 
+            "\nTIME: " + document.getElementById('timer').innerText + 
+            "\nRANK: GOD-TIER";
     }
 </script>
 </body>
