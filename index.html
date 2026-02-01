@@ -3,67 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer v7.9.2</title>
+    <title>Math Mixer v7.9.4 | HPC Terminal</title>
     <style>
         body { background-color: #050505; color: #39FF14; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; text-transform: uppercase; }
-        #game-container { border: 2px solid #39FF14; padding: 20px; text-align: center; background: #000; box-shadow: 0 0 15px #39FF14; width: 90%; max-width: 400px; position: relative; }
-        h1 { font-size: 2rem; color: #fff; text-shadow: 0 0 10px #39FF14; margin-bottom: 20px; }
-        input { background: rgba(57, 255, 20, 0.1); border: 1px solid #39FF14; color: #fff; font-size: 1.5rem; padding: 10px; width: 100%; text-align: center; margin-bottom: 15px; box-sizing: border-box; outline: none; }
-        .correct-flash { border-color: #fff !important; box-shadow: 0 0 20px #fff; transition: 0.1s; }
-        .btn-group { display: flex; gap: 5px; margin-bottom: 15px; }
-        button { background: #39FF14; color: #000; border: none; padding: 10px; flex: 1; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #fff; }
-        .active { background: #ff00ff !important; color: #fff; box-shadow: 0 0 10px #ff00ff; }
+        #game-container { border: 2px solid #39FF14; padding: 25px; text-align: center; background: #000; box-shadow: 0 0 20px rgba(57, 255, 20, 0.2); width: 90%; max-width: 420px; position: relative; }
+        
+        h1 { font-size: 1.8rem; color: #fff; letter-spacing: 4px; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px; cursor: pointer; }
+        
+        input { background: rgba(57, 255, 20, 0.05); border: 1px solid #39FF14; color: #fff; font-size: 1.6rem; padding: 12px; width: 100%; text-align: center; margin-bottom: 15px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        input:focus { background: rgba(57, 255, 20, 0.15); box-shadow: 0 0 10px rgba(57, 255, 20, 0.5); }
+        
+        .correct-flash { border-color: #fff !important; background: rgba(255,255,255,0.1) !important; }
+        
+        .btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        button { background: transparent; color: #39FF14; border: 1px solid #39FF14; padding: 12px; flex: 1; font-weight: bold; cursor: pointer; transition: 0.2s; font-family: 'Courier New', monospace; }
+        button:hover { background: #39FF14; color: #000; }
+        
+        .active { background: #39FF14 !important; color: #000 !important; box-shadow: 0 0 15px #39FF14; }
         .hidden { display: none; }
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.05); opacity: 0.8; color: #ff0000; text-shadow: 0 0 20px #ff0000; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        .special-status { animation: pulse 0.15s infinite; }
-        #rank-display { font-size: 1.8rem; margin: 15px 0; font-weight: bold; }
-        .ace-rank { color: #FFD700 !important; text-shadow: 0 0 15px #FFD700 !important; }
-        .normal-rank { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
-        #leaderboard { margin: 20px 0; border-top: 1px solid #333; padding-top: 15px; font-size: 0.8rem; text-align: left; }
-        .lb-title { color: #ff00ff; margin-bottom: 8px; letter-spacing: 2px; text-align: center; }
-        .lb-entry { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px solid #111; }
-        #version-tag { font-size: 0.6rem; color: rgba(57, 255, 20, 0.4); margin-top: 20px; letter-spacing: 2px; }
-        #final-stats { white-space: pre-wrap; line-height: 1.6; margin: 10px 0; }
+        
+        #rank-display { font-size: 1.5rem; margin: 20px 0; font-weight: bold; color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+        .special-status { animation: pulse 0.2s infinite; color: #ff0000 !important; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        #leaderboard { margin: 25px 0; border: 1px solid #222; padding: 10px; font-size: 0.75rem; text-align: left; background: #080808; }
+        .lb-title { color: #39FF14; margin-bottom: 8px; text-align: center; border-bottom: 1px solid #222; padding-bottom: 5px; }
+        .lb-entry { display: flex; justify-content: space-between; margin-bottom: 5px; font-family: monospace; }
+        
+        #version-tag { font-size: 0.6rem; color: #444; margin-top: 20px; }
+        #final-stats { text-align: left; font-size: 0.85rem; color: #aaa; line-height: 1.8; margin: 15px 0; border-left: 2px solid #39FF14; padding-left: 15px; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
     <div id="start-screen">
-        <h1>MATH MIXER</h1>
-        <input type="text" id="username" placeholder="CALLSIGN" maxlength="12">
+        <h1 onclick="location.reload()">MATH_MIXER_v7.9.4</h1>
+        <input type="text" id="username" placeholder="OPERATOR_ID" maxlength="12">
         <div class="btn-group">
-            <button id="btn-5" onclick="setDiff(5)">5X</button>
-            <button id="btn-12" onclick="setDiff(12)" class="active">12X</button>
-            <button id="btn-20" onclick="setDiff(20)">20X</button>
+            <button id="btn-5" onclick="setDiff(5)">MOD_5</button>
+            <button id="btn-12" onclick="setDiff(12)" class="active">MOD_12</button>
+            <button id="btn-20" onclick="setDiff(20)">MOD_20</button>
         </div>
-        <button onclick="startGame()" style="width: 100%;">INITIALIZE MISSION</button>
+        <button onclick="startGame()" style="width: 100%; border: 2px solid #39FF14;">EXECUTE SEQUENCE</button>
     </div>
 
     <div id="game-screen" class="hidden">
-        <div id="question" style="font-size: 3.5rem; margin: 25px 0; color: #fff;"></div>
-        <input type="number" id="answer" autocomplete="off">
-        <div style="font-size: 0.9rem; letter-spacing: 1px;">SYSTEM CLOCK: <span id="timer">0.0</span>s</div>
-        <div id="debug-hint" style="font-size: 0.6rem; margin-top: 10px; color: #555;" class="hidden">DEBUG: PRESS ESC TO SKIP</div>
+        <div id="question" style="font-size: 4rem; margin: 30px 0; color: #fff;"></div>
+        <input type="number" id="answer" autocomplete="off" inputmode="numeric">
+        <div style="font-size: 0.8rem; color: #888;">PROCESS_TIME: <span id="timer" style="color:#39FF14">0.0</span>s</div>
     </div>
 
     <div id="end-screen" class="hidden">
-        <h1 id="mission-status">MISSION COMPLETE</h1>
+        <h1 onclick="location.reload()">ANALYSIS COMPLETE</h1>
         <div id="rank-display">RANK: ---</div>
-        <p id="final-stats"></p>
+        <div id="final-stats"></div>
         <div id="leaderboard">
-            <div class="lb-title">TOP PILOTS (LOCAL)</div>
+            <div class="lb-title">REGISTRY_TOP_5</div>
             <div id="leaderboard-list"></div>
         </div>
-        <button onclick="location.reload()" style="width: 100%;">RE-RUN MISSION</button>
+        <button onclick="location.reload()" style="width: 100%;">RE-INITIALIZE</button>
     </div>
 
-    <div id="version-tag">SYSTEM VERSION: v7.9.2</div>
+    <div id="version-tag">STABLE_BUILD // FEB_2026</div>
 </div>
 
 <script>
@@ -82,16 +84,11 @@
 
     function startGame() {
         const user = document.getElementById('username').value.trim();
-        if (!user) return alert("INPUT CALLSIGN.");
+        if (!user) return alert("REQUIRED: OPERATOR_ID");
         localStorage.setItem('lastCallsign', user);
         
         isDev = (user.toUpperCase() === "TEST");
-        if (isDev) {
-            qCount = 19; // Dev shortcut: Only 1 question needed
-            document.getElementById('debug-hint').classList.remove('hidden');
-        } else {
-            qCount = 0;
-        }
+        qCount = isDev ? 19 : 0;
 
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('game-screen').classList.remove('hidden');
@@ -109,7 +106,7 @@
         const n1 = Math.floor(Math.random() * diff) + 1;
         const n2 = Math.floor(Math.random() * 12) + 1;
         curAns = n1 * n2;
-        document.getElementById('question').innerText = n1 + "×" + n2;
+        document.getElementById('question').innerText = `${n1}×${n2}`;
         document.getElementById('answer').value = '';
     }
 
@@ -121,7 +118,7 @@
         if (e.target.value === "999") { isSysOverride = true; end(); return; }
         if (parseInt(e.target.value) === curAns) {
             e.target.classList.add('correct-flash');
-            setTimeout(() => e.target.classList.remove('correct-flash'), 100);
+            setTimeout(() => e.target.classList.remove('correct-flash'), 80);
             qCount++; 
             next(); 
         }
@@ -138,9 +135,9 @@
     function renderBoard() {
         const list = document.getElementById('leaderboard-list');
         const data = JSON.parse(localStorage.getItem('mixerScores')) || [];
-        list.innerHTML = data.map((s, i) => 
-            `<div class="lb-entry"><span>${i + 1}. ${s.name}</span><span>${s.score.toFixed(1)}s</span></div>`
-        ).join('');
+        list.innerHTML = data.length > 0 
+            ? data.map((s, i) => `<div class="lb-entry"><span>[0${i + 1}] ${s.name}</span><span>${s.score.toFixed(2)}s</span></div>`).join('')
+            : '<div style="text-align:center; color:#222;">EMPTY_REGISTRY</div>';
     }
 
     function end() {
@@ -149,32 +146,32 @@
         const raw = isDev ? 0.0 : (isSysOverride ? 0.1 : parseFloat(document.getElementById('timer').innerText));
         const bonus = (diff === 20) ? 15 : (diff === 12 ? 5 : 0);
         const final = raw - bonus;
+        const mrt = raw / 20; // Mean Response Time
 
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('end-screen').classList.remove('hidden');
 
         const rankDiv = document.getElementById('rank-display');
-        const statusH1 = document.getElementById('mission-status');
-
+        
         if (isDev) {
-            rankDiv.innerText = "DEV_MODE: ACTIVE";
-            rankDiv.className = "normal-rank";
-            statusH1.innerText = "SYSTEM SECURE";
+            rankDiv.innerText = "STATUS: DEBUG_ROOT";
         } else if (final < 0) {
-            rankDiv.innerText = "RANK: TIME TRAVELER";
+            rankDiv.innerText = "RANK: QUANTUM_ANOMALY";
             rankDiv.classList.add('special-status');
-            statusH1.innerText = "TEMPORAL ANOMALY";
         } else if (isSysOverride) {
-            rankDiv.innerText = "RANK: OVERRIDE";
-            statusH1.innerText = "MANUAL TERMINATION";
+            rankDiv.innerText = "RANK: MANUAL_EXIT";
         } else {
-            let base = final < 30 ? "GENIUS" : final < 60 ? "SPEEDY" : final < 90 ? "AMATEUR" : "ROOKIE";
-            rankDiv.innerText = (diff === 20 ? "[★ ACE] " : "") + base;
-            rankDiv.className = diff === 20 ? "ace-rank" : "normal-rank";
+            // PhD / Scientific Ranks
+            let rank = final < 25 ? "DISTINGUISHED_CHAIR" : final < 45 ? "POST_DOC_FELLOW" : final < 75 ? "TENURED_RESEARCHER" : "ADJUNCT_FACULTY";
+            rankDiv.innerText = (diff === 20 ? "[★] " : "") + rank;
             saveToBoard(name, final);
         }
 
-        document.getElementById('final-stats').innerText = `PILOT: ${name}\nRAW CLOCK: ${raw.toFixed(1)}s\nSCORE: ${final.toFixed(1)}s`;
+        document.getElementById('final-stats').innerHTML = 
+            `ID: ${name}<br>` +
+            `CPU_TIME: ${raw.toFixed(2)}s<br>` +
+            `ADJ_SCORE: ${final.toFixed(2)}s<br>` +
+            `MEAN_RT: ${mrt.toFixed(3)}s / problem`;
         renderBoard();
     }
 </script>
