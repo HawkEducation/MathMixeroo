@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer - Time Traveler Edition</title>
+    <title>Math Mixer - Developer Edition</title>
     <style>
         body { background-color: #050505; color: #39FF14; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; text-transform: uppercase; }
         #game-container { border: 2px solid #39FF14; padding: 20px; text-align: center; background: #000; box-shadow: 0 0 15px #39FF14; width: 90%; max-width: 400px; }
@@ -14,7 +15,6 @@
         .active { background: #ff00ff !important; color: #fff; }
         .hidden { display: none; }
         
-        /* Time Traveler Pulse */
         @keyframes pulse {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.1); opacity: 0.7; color: #ff0000; }
@@ -31,7 +31,7 @@
 
 <div id="game-container">
     <div id="start-screen">
-        <h1>MATH MIXER</h1>
+        <h1>MATH MIXER v7.8</h1>
         <input type="text" id="username" placeholder="CALLSIGN" maxlength="12">
         <div class="btn-group">
             <button id="btn-5" onclick="setDiff(5)">5X</button>
@@ -92,7 +92,12 @@
 
     function endGame() {
         clearInterval(timerInterval);
-        let rawTime = isCheating ? 0.1 : parseFloat(document.getElementById('timer').innerText);
+        
+        let pilotName = document.getElementById('username').value.trim().toUpperCase();
+        let isDev = (pilotName === "TEST");
+        
+        // DEV MODE gets 0.0s, otherwise cheaters get 0.1s or the real timer
+        let rawTime = isDev ? 0.0 : (isCheating ? 0.1 : parseFloat(document.getElementById('timer').innerText));
         
         let bonus = (difficulty === 20) ? 15 : (difficulty === 12 ? 5 : 0);
         let adjustedTime = rawTime - bonus;
@@ -107,7 +112,12 @@
         const rankDiv = document.getElementById('rank-display');
         const statusH1 = document.getElementById('mission-status');
 
-        if (adjustedTime < 0) {
+        if (isDev) {
+            rankDiv.innerText = (difficulty === 20 ? "[★ ACE] " : "") + "GENIUS";
+            rankDiv.className = difficulty === 20 ? "ace-rank" : "normal-rank";
+            rankDiv.classList.remove('glitch-active');
+            statusH1.innerText = "SYSTEM SECURE";
+        } else if (adjustedTime < 0) {
             rankDiv.innerText = "RANK: TIME TRAVELER";
             rankDiv.classList.add('glitch-active');
             statusH1.innerText = "SYSTEM CRITICAL";
@@ -121,7 +131,7 @@
 
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('end-screen').classList.remove('hidden');
-        document.getElementById('final-stats').innerText = `PILOT: ${document.getElementById('username').value}\nRAW TIME: ${rawTime}s\nSCORE: ${adjustedTime.toFixed(1)}s`;
+        document.getElementById('final-stats').innerText = `PILOT: ${pilotName}\nRAW TIME: ${rawTime.toFixed(1)}s\nSCORE: ${adjustedTime.toFixed(1)}s`;
     }
 </script>
 </body>
