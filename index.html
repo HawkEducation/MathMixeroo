@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Mixer v7.8</title>
+    <title>Math Mixer v7.9 - Production</title>
     <style>
         body { background-color: #050505; color: #39FF14; font-family: 'Courier New', monospace; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; text-transform: uppercase; }
         #game-container { border: 2px solid #39FF14; padding: 20px; text-align: center; background: #000; box-shadow: 0 0 15px #39FF14; width: 90%; max-width: 400px; position: relative; }
@@ -15,19 +15,24 @@
         .active { background: #ff00ff !important; color: #fff; box-shadow: 0 0 10px #ff00ff; }
         .hidden { display: none; }
         
-        /* Time Traveler Glitch Effect */
+        /* Pulse Effect for High Performance */
         @keyframes pulse {
             0% { transform: scale(1); opacity: 1; }
             50% { transform: scale(1.05); opacity: 0.8; color: #ff0000; text-shadow: 0 0 20px #ff0000; }
             100% { transform: scale(1); opacity: 1; }
         }
-        .glitch-active { animation: pulse 0.15s infinite; }
+        .special-status { animation: pulse 0.15s infinite; }
         
         #rank-display { font-size: 1.8rem; margin: 15px 0; font-weight: bold; }
         .ace-rank { color: #FFD700 !important; text-shadow: 0 0 15px #FFD700 !important; }
         .normal-rank { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+        
+        #leaderboard { margin: 20px 0; border-top: 1px solid #333; padding-top: 15px; font-size: 0.8rem; text-align: left; }
+        .lb-title { color: #ff00ff; margin-bottom: 8px; letter-spacing: 2px; text-align: center; }
+        .lb-entry { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px solid #111; }
+
         #version-tag { font-size: 0.6rem; color: rgba(57, 255, 20, 0.4); margin-top: 20px; letter-spacing: 2px; }
-        #final-stats { white-space: pre-wrap; line-height: 1.6; margin: 10px 0; border-top: 1px solid #333; padding-top: 10px; }
+        #final-stats { white-space: pre-wrap; line-height: 1.6; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -54,14 +59,20 @@
         <h1 id="mission-status">MISSION COMPLETE</h1>
         <div id="rank-display">RANK: ---</div>
         <p id="final-stats"></p>
+        
+        <div id="leaderboard">
+            <div class="lb-title">TOP PILOTS (LOCAL)</div>
+            <div id="leaderboard-list"></div>
+        </div>
+
         <button onclick="location.reload()" style="width: 100%;">RE-RUN MISSION</button>
     </div>
 
-    <div id="version-tag">SYSTEM VERSION: v7.8</div>
+    <div id="version-tag">SYSTEM VERSION: v7.9</div>
 </div>
 
 <script>
-    let questionCount = 0, startTime, currentAns, difficulty = 12, timerInterval, isCheating = false;
+    let questionCount = 0, startTime, currentAns, difficulty = 12, timerInterval, isOverride = false;
 
     function setDiff(val) {
         difficulty = val;
@@ -92,28 +103,35 @@
     }
 
     document.getElementById('answer').addEventListener('input', (e) => {
-        if (e.target.value === "999") { isCheating = true; endGame(); return; }
+        // Special override code
+        if (e.target.value === "999") { isOverride = true; endGame(); return; }
         if (parseInt(e.target.value) === currentAns) { questionCount++; nextQuestion(); }
     });
 
+    function updateLeaderboard(name, score) {
+        if (isOverride || name === "TEST") return;
+        let entries = JSON.parse(localStorage.getItem('mixerScores')) || [];
+        entries.push({ name, score: parseFloat(score) });
+        entries.sort((a, b) => a.score - b.score);
+        entries = entries.slice(0, 5);
+        localStorage.setItem('mixerScores', JSON.stringify(entries));
+        renderLeaderboard(entries);
+    }
+
+    function renderLeaderboard(entries) {
+        const list = document.getElementById('leaderboard-list');
+        list.innerHTML = entries.map((s, i) => 
+            `<div class="lb-entry"><span>${i + 1}. ${s.name}</span><span>${s.score.toFixed(1)}s</span></div>`
+        ).join('');
+    }
+
     function endGame() {
         clearInterval(timerInterval);
-        
-        let pilotName = document.getElementById('username').value.trim().toUpperCase();
-        let isDev = (pilotName === "TEST");
-        
-        // DEV gets 0.0s, Cheaters get 0.1s, Pros get the real time
-        let rawTime = isDev ? 0.0 : (isCheating ? 0.1 : parseFloat(document.getElementById('timer').innerText));
-        
-        let bonus = (difficulty === 20) ? 15 : (difficulty === 12 ? 5 : 0);
-        let adjustedTime = rawTime - bonus;
-        
-        let rankBase = "";
-        if (adjustedTime < 30) rankBase = "GENIUS";
-        else if (adjustedTime < 60) rankBase = "SPEEDY";
-        else if (adjustedTime < 90) rankBase = "AMATEUR";
-        else if (adjustedTime < 120) rankBase = "ROOKIE";
-        else rankBase = "NEWBIE";
+        const name = document.getElementById('username').value.trim().toUpperCase();
+        const isDev = (name === "TEST");
+        const raw = isDev ? 0.0 : (isOverride ? 0.1 : parseFloat(document.getElementById('timer').innerText));
+        const bonus = (difficulty === 20) ? 15 : (difficulty === 12 ? 5 : 0);
+        const score = raw - bonus;
 
         const rankDiv = document.getElementById('rank-display');
         const statusH1 = document.getElementById('mission-status');
@@ -121,27 +139,25 @@
         document.getElementById('game-screen').classList.add('hidden');
         document.getElementById('end-screen').classList.remove('hidden');
 
-        // Logic branching for final ranks
         if (isDev) {
-            rankDiv.innerText = (difficulty === 20 ? "[★ ACE] " : "") + "GENIUS";
-            rankDiv.className = difficulty === 20 ? "ace-rank" : "normal-rank";
+            rankDiv.innerText = "DEV_MODE: ACTIVE";
             statusH1.innerText = "SYSTEM SECURE";
-        } else if (adjustedTime < 0) {
+        } else if (score < 0) {
             rankDiv.innerText = "RANK: TIME TRAVELER";
-            rankDiv.classList.add('glitch-active');
-            statusH1.innerText = "SYSTEM CRITICAL";
-        } else if (isCheating) {
-            rankDiv.innerText = "RANK: EXPOSED";
-            rankDiv.className = "normal-rank";
+            rankDiv.classList.add('special-status');
+            statusH1.innerText = "TEMPORAL ANOMALY";
+        } else if (isOverride) {
+            rankDiv.innerText = "RANK: OVERRIDE";
+            statusH1.innerText = "MANUAL TERMINATION";
         } else {
-            rankDiv.innerText = (difficulty === 20 ? "[★ ACE] " : "") + rankBase;
+            let base = score < 30 ? "GENIUS" : score < 60 ? "SPEEDY" : score < 90 ? "AMATEUR" : "ROOKIE";
+            rankDiv.innerText = (difficulty === 20 ? "[★ ACE] " : "") + base;
             rankDiv.className = difficulty === 20 ? "ace-rank" : "normal-rank";
+            updateLeaderboard(name, score);
         }
 
-        document.getElementById('final-stats').innerText = 
-            `PILOT: ${pilotName}\n` +
-            `RAW TIME: ${rawTime.toFixed(1)}s\n` +
-            `SCORE: ${adjustedTime.toFixed(1)}s`;
+        document.getElementById('final-stats').innerText = `PILOT: ${name}\nRAW CLOCK: ${raw.toFixed(1)}s\nSCORE: ${score.toFixed(1)}s`;
+        renderLeaderboard(JSON.parse(localStorage.getItem('mixerScores')) || []);
     }
 </script>
 </body>
